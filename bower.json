@@ -36,7 +36,7 @@
     "iron-ajax": "PolymerElements/iron-ajax#1.2.x"
   },
   "resolutions": {
-    "myscript": "master",
+    "myscript": "1.2.2",
     "polymer": "1.4.x"
   }
 }
