@@ -39,7 +39,7 @@
     "tag": "v1.2.0",
     "commit": "057d8b332509bba9bdcfaa085330714b94acf0dc"
   },
-  "_source": "https://scm.corp.myscript.com/scm/ws/webcomponents-myscript-common-element.git",
+  "_source": "https://github.com/MyScript/myscript-common-element.git",
   "_target": "1.2.0",
   "_originalSource": "myscript-common-element"
 }

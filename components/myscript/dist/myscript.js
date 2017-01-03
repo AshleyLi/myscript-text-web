@@ -4785,8 +4785,8 @@ MyScript = {
      */
     function TextDocument(obj) {
         this.tagItems = [];
-        this.wordCandidates = [];
-        this.charCandidates = [];
+        this.wordSegments = [];
+        this.charSegments = [];
         if (obj) {
             if (obj.textSegmentResult) {
                 this.textSegmentResult = new scope.TextSegment(obj.textSegmentResult);
@@ -4794,11 +4794,23 @@ MyScript = {
             for (var i in obj.tagItems) {
                 this.tagItems.push(new scope.TextTagItem(obj.tagItems[i]));
             }
-            for (var j in obj.wordCandidates) {
-                this.wordCandidates.push(new scope.TextSegment(obj.wordCandidates[j]));
+            for (var j in obj.wordSegments) {
+                this.wordSegments.push(new scope.TextSegment(obj.wordSegments[j]));
             }
-            for (var k in obj.charCandidates) {
-                this.charCandidates.push(new scope.TextSegment(obj.charCandidates[k]));
+            for (var k in obj.charSegments) {
+                this.charSegments.push(new scope.TextSegment(obj.charSegments[k]));
+            }
+            /**
+             * @deprecated
+             */
+            for (var l in obj.wordCandidates) {
+                this.wordSegments.push(new scope.TextSegment(obj.wordCandidates[l]));
+            }
+            /**
+             * @deprecated
+             */
+            for (var m in obj.charCandidates) {
+                this.charSegments.push(new scope.TextSegment(obj.charCandidates[m]));
             }
         }
     }
@@ -4820,7 +4832,7 @@ MyScript = {
      * @returns {TextSegment[]}
      */
     TextDocument.prototype.getWordSegments = function () {
-        return this.wordCandidates;
+        return this.wordSegments;
     };
 
     /**
@@ -4846,7 +4858,7 @@ MyScript = {
      * @returns {TextSegment[]}
      */
     TextDocument.prototype.getCharSegments = function () {
-        return this.charCandidates;
+        return this.charSegments;
     };
 
     /**
@@ -4888,6 +4900,7 @@ MyScript = {
     // Export
     scope.TextDocument = TextDocument;
 })(MyScript);
+
 
 
 (function (scope) {
@@ -10561,7 +10574,7 @@ MyScript = {
     }
 
     NetworkWSInterface.prototype.setUrl = function (url) {
-        if (url !== undefined) {
+        if ((url !== undefined) && (url !== this._url)) {
             this.close();
             this._url = url;
         }
@@ -11099,7 +11112,7 @@ MyScript = {
      * @param {String}
      */
     AbstractWSRecognizer.prototype.setHost = function (host) {
-        if (host !== undefined) {
+        if ((host !== undefined) && (host != this.getHost())) {
             this.setUrl(this.getProtocol() + host);
         }
     };
@@ -13509,15 +13522,21 @@ MyScript = {
         this.isStarted = false;
         this.resultCallback = callback;
         this.changeCallback = undefined;
-        this.canvasRatio = 1;
+
 
         // Capture
+        var tempCanvas = _createCanvas(element, 'ms-temp-canvas');
+        this.canvasRatio = _getCanvasRatio(tempCanvas);
+        element.removeChild(tempCanvas);
+        //this.canvasRatio = 1;
+
         this._captureCanvas = _createCanvas(element, 'ms-capture-canvas');
+
         this._inkGrabber = new scope.InkGrabber(this._captureCanvas.getContext('2d'));
 
         // Rendering
         this._renderingCanvas = _createCanvas(element, 'ms-rendering-canvas');
-        this.canvasRatio = _getCanvasRatio(this._renderingCanvas);
+
 
         this._textRenderer = new scope.TextRenderer(this._renderingCanvas.getContext('2d'));
         this._mathRenderer = new scope.MathRenderer(this._renderingCanvas.getContext('2d'));
@@ -13621,6 +13640,7 @@ MyScript = {
 
             this._renderingCanvas.height = height * this.canvasRatio;
             this._renderingCanvas.style.height = height + 'px';
+
             this._renderingCanvas.getContext('2d').scale(this.canvasRatio, this.canvasRatio);
         }
         this._initRenderingCanvas();
@@ -14326,20 +14346,23 @@ MyScript = {
     InkPaper.prototype._down = function (x, y, t) {
         clearTimeout(this._timerId);
         var sizeChanged = false;
-        if (this._captureCanvas.clientHeight != this._captureCanvas.height) {
-            this._captureCanvas.height = this._captureCanvas.clientHeight;
-            this._renderingCanvas.height = this._renderingCanvas.clientHeight;
+        if (this._captureCanvas.clientHeight * this.canvasRatio !== this._captureCanvas.height) {
+            this._captureCanvas.height = this._captureCanvas.clientHeight * this.canvasRatio;
+            this._renderingCanvas.height = this._renderingCanvas.clientHeight * this.canvasRatio;
             sizeChanged = true;
         }
 
-        if (this._captureCanvas.clientWidth != this._captureCanvas.width) {
-            this._captureCanvas.width = this._captureCanvas.clientWidth;
-            this._renderingCanvas.width = this._renderingCanvas.clientWidth;
+        if (this._captureCanvas.clientWidth * this.canvasRatio !== this._captureCanvas.width) {
+            this._captureCanvas.width = this._captureCanvas.clientWidth * this.canvasRatio;
+            this._renderingCanvas.width = this._renderingCanvas.clientWidth * this.canvasRatio;
             sizeChanged = true;
         }
 
         //Safari trash the canvas content when heigth or width are modified.
         if (sizeChanged) {
+
+            this._captureCanvas.getContext('2d').scale(this.canvasRatio, this.canvasRatio);
+            this._renderingCanvas.getContext('2d').scale(this.canvasRatio, this.canvasRatio);
             this._initRenderingCanvas();
         }
 
@@ -14425,6 +14448,11 @@ MyScript = {
 
     InkPaper.prototype._renderResult = function (data) {
         this.updatedModel = this._selectedRenderer.drawRecognitionResult(this.getComponents().concat(this._components), data? data.getDocument(): undefined);
+        if (this._selectedRecognizer instanceof scope.MusicRecognizer) {
+            if (this._selectedRecognizer.getParameters().getStaff() instanceof scope.MusicStaff) {
+                this._selectedRenderer.drawStaff(this._selectedRecognizer.getParameters().getStaff());
+            }
+        }
         this._onResult(data);
         return data;
     };
@@ -14469,10 +14497,10 @@ MyScript = {
 
         //Desactivation of contextmenu to prevent safari to fire pointerdown only once
         element.addEventListener("contextmenu", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }
+                                     e.preventDefault();
+                                     e.stopPropagation();
+                                     return false;
+                                 }
         );
 
         element.addEventListener('pointerdown', function (e) {
@@ -14508,8 +14536,8 @@ MyScript = {
             if (pointerId === e.pointerId) {
                 e.preventDefault();
 
-                var coord = _getCoordinates(e, element);
-                self._up(coord.x, coord.y, coord.t);
+                var point = self._inkGrabber.getStroke().getPointByIndex(self._inkGrabber.getStroke().getLastIndexPoint());
+                self._up(point.x, point.y, point.t);
                 pointerId = undefined;
             }
         }, false);
@@ -14518,8 +14546,8 @@ MyScript = {
             if (pointerId === e.pointerId) {
                 e.preventDefault();
 
-                var coord = _getCoordinates(e, element);
-                self._up(coord.x, coord.y, coord.t);
+                var point = self._inkGrabber.getStroke().getPointByIndex(self._inkGrabber.getStroke().getLastIndexPoint());
+                self._up(point.x, point.y, point.t);
                 pointerId = undefined;
             }
         }, false);
@@ -14639,27 +14667,37 @@ MyScript = {
      * @private
      */
     InkPaper.prototype.getInkAsImageData = function (marginX, marginY) {
+        //Remove the scratched strokes
+        var componentCopy = [];
+        this._components.forEach(function(stroke) {
+                                     if (stroke.scratchedStroke !== true) {
+                                         componentCopy.push(stroke);
+                                     }
+                                 }
+        );
+
         if (!marginX) {
             marginX = 10;
         }
         if (!marginY) {
             marginY = 10;
         }
-        console.log({marginX: marginX, marginY: marginY});
-        if (this._components && this._components.length > 0) {
+
+        if (componentCopy && componentCopy.length > 0) {
             var updatedStrokes;
-            var strokesCount = this._components.length;
+            var strokesCount = componentCopy.length;
             //Initializing min and max
-            var minX = this._components[0].x[0];
-            var maxX = this._components[0].x[0];
-            var minY = this._components[0].y[0];
-            var maxY = this._components[0].y[0];
+            var minX = componentCopy[0].x[0];
+            var maxX = componentCopy[0].x[0];
+            var minY = componentCopy[0].y[0];
+            var maxY = componentCopy[0].y[0];
+
             // Computing the min and max for x and y
-            for (var strokeNb = 0; strokeNb < this._components.length; strokeNb++) {
-                var pointCount = this._components[strokeNb].x.length;
+            for (var strokeNb = 0; strokeNb < componentCopy.length; strokeNb++) {
+                var pointCount = componentCopy[strokeNb].x.length;
                 for (var pointNb = 0; pointNb < pointCount; pointNb++) {
-                    var currentX = this._components[strokeNb].x[pointNb];
-                    var currentY = this._components[strokeNb].y[pointNb];
+                    var currentX = componentCopy[strokeNb].x[pointNb];
+                    var currentY = componentCopy[strokeNb].y[pointNb];
                     if (currentX < minX) {
                         minX = currentX;
                     }
@@ -14681,7 +14719,7 @@ MyScript = {
             var ctx = nonDisplayCanvas.getContext("2d");
 
             var imageRendered = new scope.ImageRenderer(ctx);
-            imageRendered.drawComponents(this._components, ctx);
+            imageRendered.drawComponents(componentCopy, ctx);
 
             // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData
             return ctx.getImageData(minX - marginX, minY - marginY, (maxX - minX ) + (2 * marginX), (maxY - minY ) + (2 * marginY));

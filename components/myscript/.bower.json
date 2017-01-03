@@ -1,6 +1,5 @@
 {
   "name": "myscript",
-  "version": "1.2.0",
   "main": [
     "./dist/myscript.min.js",
     "./dist/myscript.min.css"
@@ -32,20 +31,22 @@
     "Gruntfile.js",
     "build.json",
     "dist/docs",
-    "dist/samples"
+    "dist/samples",
+    "docs"
   ],
   "dependencies": {
     "cryptojslib": "3.1.x",
     "q": "1.4.x",
     "pepjs": "0.4.x"
   },
-  "_release": "1.2.0",
+  "version": "1.2.2",
+  "_release": "1.2.2",
   "_resolution": {
     "type": "version",
-    "tag": "v1.2.0",
-    "commit": "009437356fc2c5789bc57e34cc36bec2747f41f9"
+    "tag": "v1.2.2",
+    "commit": "5bf7f3d78d10d241059e07e59c43a8660348b7ad"
   },
-  "_source": "https://scm.corp.myscript.com/scm/ws/myscriptjs.git",
-  "_target": "1.2.0",
+  "_source": "https://github.com/MyScript/MyScriptJS.git",
+  "_target": "1.2.2",
   "_originalSource": "myscript"
 }

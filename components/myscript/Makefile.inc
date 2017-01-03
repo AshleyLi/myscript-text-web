@@ -1,6 +1,11 @@
 SHELL = /bin/bash
 GIT_VERSION := $(shell git describe --tags --long --always)
-VERSION = 1.2.0
+VERSION = 1.2.2
+
+OFFLINE = false
+ifeq ($(OFFLINE),true)
+    BOWER_PARAMETERS := --offline
+endif
 
 MAKE := $(MAKE) --no-print-directory
 

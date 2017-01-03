@@ -87,17 +87,17 @@ var serveTask = function () {
         //       will present a certificate warning in the browser.
         // https: true,
         server: {
-            baseDir: ['dist', 'demo'],
+            baseDir: ['demo', 'bower_components'],
             middleware: [historyApiFallback()],
             routes: {
-                '/bower_components': 'bower_components'
+                '/dist': 'dist'
             }
         }
     });
 };
 
 gulp.task('doc', function () {
-    return docTask(fileList, 'dist/doc/');
+    return docTask(fileList, 'docs/api');
 });
 gulp.task('clean', function () {
     return cleanTask(['.tmp', 'dist']);
